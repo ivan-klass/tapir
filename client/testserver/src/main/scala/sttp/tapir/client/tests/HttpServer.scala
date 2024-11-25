@@ -8,7 +8,7 @@ import fs2.{Pipe, Stream}
 import org.http4s.dsl.io._
 import org.http4s.headers.{Accept, `Content-Type`}
 import org.http4s.server.Router
-import org.http4s.blaze.server.BlazeServerBuilder
+import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.middleware._
 import org.http4s.server.websocket.WebSocketBuilder2
 import org.http4s.websocket.WebSocketFrame
@@ -213,11 +213,11 @@ class HttpServer(port: Port) {
   //
 
   def start(): Unit = {
-    val (_, _stopServer) = BlazeServerBuilder[IO]
-      .withExecutionContext(ExecutionContext.global)
-      .bindHttp(port)
+    val (_, _stopServer) = EmberServerBuilder
+      .default[IO]
+      .withPort(port)
       .withHttpWebSocketApp(app)
-      .resource
+      .build
       .map(_.address.getPort)
       .allocated
       .unsafeRunSync()

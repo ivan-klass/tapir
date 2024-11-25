@@ -2,20 +2,21 @@ package sttp.tapir.server.http4s.ztapir
 
 import cats.data.NonEmptyList
 import cats.effect.{IO, Resource}
-import cats._
-import cats.syntax.all._
-import org.http4s.blaze.server.BlazeServerBuilder
+import cats.*
+import cats.syntax.all.*
+import com.comcast.ip4s.Port
+import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.websocket.WebSocketBuilder2
 import org.http4s.{HttpApp, HttpRoutes}
 import sttp.capabilities.WebSockets
 import sttp.capabilities.zio.ZioStreams
 import sttp.tapir.server.http4s.Http4sServerOptions
-import sttp.tapir.server.http4s.ztapir.ZHttp4sTestServerInterpreter._
+import sttp.tapir.server.http4s.ztapir.ZHttp4sTestServerInterpreter.*
 import sttp.tapir.server.tests.TestServerInterpreter
-import sttp.tapir.tests._
+import sttp.tapir.tests.*
 import sttp.tapir.ztapir.ZServerEndpoint
 import zio.{Runtime, Task, Unsafe}
-import zio.interop.catz._
+import zio.interop.catz.*
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
@@ -41,11 +42,11 @@ class ZHttp4sTestServerInterpreter extends TestServerInterpreter[Task, ZioStream
     val service: WebSocketBuilder2[Task] => HttpApp[Task] =
       wsb => routes.map(_.apply(wsb)).reduceK.orNotFound
 
-    BlazeServerBuilder[Task]
-      .withExecutionContext(ExecutionContext.global)
-      .bindHttp(0, "localhost")
+    EmberServerBuilder
+      .default[Task]
+      .withPort(Port.fromInt(0).get)
       .withHttpWebSocketApp(service)
-      .resource
+      .build
       .map(_.address.getPort)
       .mapK(new ~>[Task, IO] {
         // Converting a ZIO effect to an Cats Effect IO effect

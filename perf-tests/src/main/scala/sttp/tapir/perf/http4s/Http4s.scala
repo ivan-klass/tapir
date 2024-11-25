@@ -5,7 +5,7 @@ import cats.syntax.all._
 import fs2._
 import fs2.io.file.{Files, Path => Fs2Path}
 import org.http4s._
-import org.http4s.blaze.server.BlazeServerBuilder
+import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.dsl._
 import org.http4s.implicits._
 import org.http4s.server.Router
@@ -109,12 +109,13 @@ object server {
   def runServer(
       router: WebSocketBuilder2[IO] => HttpRoutes[IO]
   ): IO[ServerRunner.KillSwitch] =
-    BlazeServerBuilder[IO]
-      .bindHttp(Port, "localhost")
+    EmberServerBuilder
+      .default[IO]
+      .withPort(Port)
       .withHttpWebSocketApp(wsb => router(wsb).orNotFound)
       .withMaxConnections(maxConnections)
       .withConnectorPoolSize(connectorPoolSize)
-      .resource
+      .build
       .allocated
       .map(_._2)
       .map(_.flatTap { _ =>
